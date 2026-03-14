@@ -11,7 +11,7 @@ The goal of this repo is only to generate synthetic WAV samples with Piper.
 
 - `generate_samples.py`
 - Minimal runtime dependency files (`requirements.txt`, `pyproject.toml`)
-- `models/en_US-libritts_r-medium.pt.json` (metadata required by the English `.pt` generator)
+- `models/*.pt.json` metadata files used by trainer scripts/release assets
 
 ## What Was Removed
 
