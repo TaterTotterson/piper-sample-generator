@@ -11,12 +11,13 @@ The goal of this repo is only to generate synthetic WAV samples with Piper.
 
 - `generate_samples.py`
 - Minimal runtime dependency files (`requirements.txt`, `pyproject.toml`)
+- `models/en_US-libritts_r-medium.pt.json` (metadata required by the English `.pt` generator)
 
 ## What Was Removed
 
 - Upstream Piper training package code (`piper_train/`)
 - Audio augmentation script and impulse assets (`augment.py`, `impulses/`)
-- Bundled example model files (`models/`)
+- Bundled model binaries (`models/*.pt`, `models/*.onnx`)
 - Dev/lint helper scripts and config files
 
 ## Install
