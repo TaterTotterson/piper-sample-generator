@@ -15,7 +15,8 @@ import numpy as np
 import torch
 from piper import PiperVoice, SynthesisConfig
 from piper.phonemize_espeak import EspeakPhonemizer
-from torch.nn import functional as F
+
+from piper_train.vits import commons
 
 _LOGGER = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -403,10 +404,10 @@ def generate_audio(
     w_ceil = torch.ceil(w)
     y_lengths = torch.clamp_min(torch.sum(w_ceil, [1, 2]), 1).long()
     y_mask = torch.unsqueeze(
-        sequence_mask(y_lengths, int(y_lengths.max().item())), 1
+        commons.sequence_mask(y_lengths, int(y_lengths.max().item())), 1
     ).type_as(x_mask)
     attn_mask = torch.unsqueeze(x_mask, 2) * torch.unsqueeze(y_mask, -1)
-    attn = generate_path(w_ceil, attn_mask)
+    attn = commons.generate_path(w_ceil, attn_mask)
 
     m_p = torch.matmul(attn.squeeze(1), m_p_orig.transpose(1, 2)).transpose(
         1, 2
@@ -423,28 +424,6 @@ def generate_audio(
     phoneme_samples = cast(torch.FloatTensor, w_ceil * 256)  # hop length
 
     return audio, phoneme_samples
-
-
-def sequence_mask(
-    length: torch.Tensor, max_length: Optional[int] = None
-) -> torch.Tensor:
-    if max_length is None:
-        max_length = int(length.max().item())
-    x = torch.arange(max_length, dtype=length.dtype, device=length.device)
-    return x.unsqueeze(0) < length.unsqueeze(1)
-
-
-def generate_path(duration: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
-    """Generate monotonic attention path from durations."""
-    b, _, t_y, t_x = mask.shape
-    cum_duration = torch.cumsum(duration, -1)
-
-    cum_duration_flat = cum_duration.view(b * t_x)
-    path = sequence_mask(cum_duration_flat, t_y).type_as(mask)
-    path = path.view(b, t_x, t_y)
-    path = path - F.pad(path, (0, 0, 1, 0, 0, 0))[:, :-1]
-    path = path.unsqueeze(1).transpose(2, 3) * mask
-    return path
 
 
 _PHONEMIZER = EspeakPhonemizer()
